@@ -75,6 +75,11 @@ public class MainActivity extends AppCompatActivity implements WebServiceAsyncTa
 
     @Override
     public void onTaskFinishGettingData(String result) {
-        Toast.makeText(this, "Web Service Result: " + result, Toast.LENGTH_LONG).show();
+        // In this example, do nothing for MainActivity
+    }
+
+    @Override
+    public void onTaskEndWithResult(int status) {
+        // In this example, do nothing for MainActivity
     }
 }

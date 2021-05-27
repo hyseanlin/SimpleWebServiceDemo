@@ -34,29 +34,34 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
     public static final String METHOD_PATCH = "PATCH";
     public static final String METHOD_DELETE = "DELETE";
 
-    private String LOG_ACTIVITY = "WEB_SERVICE_DEMO";
+    private String WEB_SERVICE_TASK = "WEB_SERVICE_TASK";
+
     private ProgressDialog progressDialog;
     private Activity mActivity;
     private Class mClass;
     private String mBearerToken;
 
-    //declare a delegate with type of protocol declared in this task
+    // Declare a delegate with type of protocol declared in this task
+    // c.f.: https://stackoverflow.com/questions/9458258/return-a-value-from-asynctask-in-android
     private TaskDelegate mDelegate;
 
-    //here is the task protocol to can delegate on other object
+    // Here is the task protocol to can delegate on other object
     public interface TaskDelegate {
-        //define you method headers to override
+        // Define you method headers to override
         void onTaskFinishGettingData(String result);
+        void onTaskEndWithResult(int status);
     }
 
     public void setDelegate(TaskDelegate delegate) {
         mDelegate = delegate;
     }
+
     public WebServiceAsyncTask(Activity act, Class cls)
     {
         mActivity = act;
         mClass = cls;
         mBearerToken = null;
+        mDelegate = null;
     }
 
     public WebServiceAsyncTask(Activity act, Class cls, String token)
@@ -64,6 +69,7 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
         mActivity = act;
         mClass = cls;
         mBearerToken = token;
+        mDelegate = null;
     }
 
     static public String getPostDataString(HashMap<String, String> params)
@@ -91,7 +97,6 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Log.e("a:::::::::::::::", result.toString());
         return result.toString();
     }
 
@@ -137,6 +142,7 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
                     conn.setRequestMethod(METHOD_POST);
                     conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
                     break;
+                case METHOD_DELETE:
                 case METHOD_PATCH:
                 case METHOD_PUT:
                     conn.setRequestMethod(METHOD_POST);
@@ -174,13 +180,17 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
 
             //拿到請求結果
             int responseCode = conn.getResponseCode();
+            Log.e(WEB_SERVICE_TASK, "Method: " + requestMethod +
+                    "; URL: " + requestURL +
+                    ", Reponse Code: " + responseCode);
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 //獲取伺服器返回並進行讀取
                 BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 webRespone = br.readLine();
                 br.close();
+                if (mDelegate != null)
+                    mDelegate.onTaskFinishGettingData(webRespone);
             } else {
-                Log.e(LOG_ACTIVITY, "Response code: " + responseCode);
                 webRespone = String.valueOf(responseCode);
             }
             publishProgress(75);
@@ -214,6 +224,7 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
         try {
             responseJSON = new JSONObject(webResponse);
             int status = responseJSON.getInt("status");
+            Log.e(WEB_SERVICE_TASK, "status: " + status);
             if (status == 1)
             {   // success
                 if (mClass != null) {
@@ -227,8 +238,7 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
                 }
                 if (responseJSON.has("data"))
                 {
-                    Log.e(LOG_ACTIVITY, "Data: " + responseJSON.getString("data"));
-                    mDelegate.onTaskFinishGettingData(responseJSON.getString("data"));
+                    Log.e(WEB_SERVICE_TASK, "data: " + responseJSON.getString("data"));
                 }
             } else {
                 // failed
@@ -236,8 +246,10 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
                 int errorCode = errorJSON.getInt("code");
                 String msg = errorJSON.getString("message");
                 Toast.makeText(mActivity, "Error message: " + msg, Toast.LENGTH_LONG).show();
-                Log.e(LOG_ACTIVITY, "Error message: " + msg);
+                Log.e(WEB_SERVICE_TASK, "Error message: " + msg);
             }
+            if (mDelegate != null)
+                mDelegate.onTaskEndWithResult(status);
         } catch (JSONException e) {
             e.printStackTrace();
         }

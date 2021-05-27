@@ -14,9 +14,9 @@ import org.json.JSONObject;
 import java.util.HashMap;
 
 public class QueryActivity extends AppCompatActivity implements WebServiceAsyncTask.TaskDelegate {
-    String mStrToken;
-    Button mBtnQuery, mBtnUpdate;
-    EditText mEdtTxtName;
+    String mStrToken, mStrName, mStrEmail;
+    Button mBtnQuery, mBtnUpdate, mBtnDelete;
+    EditText mEdtTxtName, mEdtTxtEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,11 +24,15 @@ public class QueryActivity extends AppCompatActivity implements WebServiceAsyncT
         setContentView(R.layout.activity_query);
 
         mEdtTxtName = findViewById(R.id.edtTxtName);
+        mEdtTxtEmail = findViewById(R.id.edtTxtEmail);
+        mEdtTxtEmail.setEnabled(false);
         mBtnQuery = findViewById(R.id.btnQuery);
         mBtnUpdate = findViewById(R.id.btnUpdate);
+        mBtnDelete = findViewById(R.id.btnDelete);
 
         mBtnQuery.setOnClickListener(mBtnQueryOnClickedListener);
         mBtnUpdate.setOnClickListener(mBtnUpdateOnClickedListener);
+        mBtnDelete.setOnClickListener(mBtnDeleteOnClickedListener);
 
         // Get the data from intent
         Bundle bundle = getIntent().getExtras();
@@ -38,48 +42,96 @@ public class QueryActivity extends AppCompatActivity implements WebServiceAsyncT
         try {
             responseJSON = new JSONObject(webData);
             mStrToken = responseJSON.getString("token");
-            Log.e("WEB_DATA", "Token: " + mStrToken);
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        queryData();
+    }
+
+    private void queryData() {
+        // 打包資料
+        String strQueryString="";
+        String strUrlRegister = "http://10.0.2.2:8000/me";
+        // 建構一個 AsyncTask 物件
+        WebServiceAsyncTask wsTask = new WebServiceAsyncTask(QueryActivity.this, null, mStrToken);
+        wsTask.setDelegate(QueryActivity.this);
+        // 呼叫其 execute 方法(可夾帶參數)
+        wsTask.execute(strUrlRegister, strQueryString, WebServiceAsyncTask.METHOD_GET);
     }
 
     private View.OnClickListener mBtnQueryOnClickedListener = new View.OnClickListener() {
 
         @Override
         public void onClick(View v) {
-            // 打包資料
-            String strQueryString="";
-
-            String strUrlRegister = "http://10.0.2.2:8000/me";
-            // 建構一個 AsyncTask 物件
-            WebServiceAsyncTask wsTask = new WebServiceAsyncTask(QueryActivity.this, null, mStrToken);
-            wsTask.setDelegate(QueryActivity.this);
-            // 呼叫其 execute 方法(可夾帶參數)
-            wsTask.execute(strUrlRegister, strQueryString, WebServiceAsyncTask.METHOD_GET);
+            queryData();
         }
     };
 
-    private View.OnClickListener mBtnUpdateOnClickedListener = new View.OnClickListener() {
+    private View.OnClickListener mBtnUpdateOnClickedListener = new View.OnClickListener()  {
+        @Override
+        public void onClick(View v) {
+            String name;
+            name = mEdtTxtName.getText().toString();
+            if (!name.isEmpty())
+            {
+                mStrName = name;
+                // 打包資料
+                String strQueryString="";
+                HashMap<String, String> data = new HashMap<>();
+                data.put("name", mStrName);
+                strQueryString = WebServiceAsyncTask.getPostDataString(data);
+
+                String strUrlRegister = "http://10.0.2.2:8000/me";
+                // 建構一個 AsyncTask 物件
+                WebServiceAsyncTask wsTask = new WebServiceAsyncTask(QueryActivity.this, null, mStrToken);
+                wsTask.setDelegate(QueryActivity.this);
+                // 呼叫其 execute 方法(可夾帶參數)
+                wsTask.execute(strUrlRegister, strQueryString, WebServiceAsyncTask.METHOD_PUT);
+            } else {
+                Toast.makeText(QueryActivity.this, "The name field must be given!", Toast.LENGTH_LONG).show();
+            }
+        }
+    };
+
+    private View.OnClickListener mBtnDeleteOnClickedListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             // 打包資料
             String strQueryString="";
-            HashMap<String, String> data = new HashMap<>();
-            data.put("name", mEdtTxtName.getText().toString());
-            strQueryString = WebServiceAsyncTask.getPostDataString(data);
 
             String strUrlRegister = "http://10.0.2.2:8000/me";
             // 建構一個 AsyncTask 物件
             WebServiceAsyncTask wsTask = new WebServiceAsyncTask(QueryActivity.this, null, mStrToken);
             wsTask.setDelegate(QueryActivity.this);
             // 呼叫其 execute 方法(可夾帶參數)
-            wsTask.execute(strUrlRegister, strQueryString, WebServiceAsyncTask.METHOD_PUT);
+            wsTask.execute(strUrlRegister, strQueryString, WebServiceAsyncTask.METHOD_DELETE);
+            finish();
         }
     };
 
     @Override
     public void onTaskFinishGettingData(String result) {
-        Toast.makeText(this, "Web Service Result: " + result, Toast.LENGTH_LONG).show();
+        /* NOTE: Here, CANNOT do any UI-related things (such as a call to Toast.makeText() ) */
+        JSONObject responseJSON;
+        try {
+            responseJSON = new JSONObject(result);
+            if (responseJSON.has("token"))
+                mStrToken = responseJSON.getString("token");
+            if (responseJSON.has("data"))
+            {
+                JSONObject dataJSON = responseJSON.getJSONObject("data");
+                mStrName = dataJSON.getString("name");
+                mStrEmail = dataJSON.getString("email");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onTaskEndWithResult(int status) {
+        /* NOTE: Here, FREE to do any UI-related things (such as a call to Toast.makeText() ) */
+        mEdtTxtEmail.setText(mStrEmail);
+        mEdtTxtName.setText(mStrName);
     }
 }

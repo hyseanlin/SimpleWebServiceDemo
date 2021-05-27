@@ -124,7 +124,6 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
         try {
             url = new URL(requestURL);
             conn = (HttpURLConnection) url.openConnection();
-            publishProgress(10);
 
             //設置從主機讀取超時
             conn.setReadTimeout(15000);
@@ -153,8 +152,7 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
 
             //允許從服務器獲得響應，能夠使用getInputStream
             conn.setDoInput(true);
-            conn.setUseCaches(false);
-            publishProgress(20);
+            conn.setUseCaches(false);;
 
             if (requestMethod != METHOD_GET) {
                 //允許可調用getOutPutStream()從服務獲得字節輸出流
@@ -173,7 +171,6 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
                 writer.close();
                 os.close();
             }
-            publishProgress(60);
 
             //拿到請求結果
             int responseCode = conn.getResponseCode();
@@ -182,15 +179,26 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
                     ", Reponse Code: " + responseCode);
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 //獲取伺服器返回並進行讀取
+                BufferedReader reader = new BufferedReader(new InputStreamReader(
+                        conn.getInputStream(), "UTF-8"), 8);
+                StringBuilder sb = new StringBuilder();
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line + "\n");
+                }
+                webRespone = sb.toString();
+                publishProgress(95);
+                /*
+                //An alternative to receiving web response
                 BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 webRespone = br.readLine();
                 br.close();
+                 */
                 if (mDelegate != null)
                     mDelegate.onTaskFinishGettingData(webRespone);
             } else {
                 webRespone = String.valueOf(responseCode);
             }
-            publishProgress(75);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

@@ -15,7 +15,7 @@ import java.util.HashMap;
 
 public class QueryActivity extends AppCompatActivity implements WebServiceAsyncTask.TaskDelegate {
     String mStrToken, mStrName, mStrEmail;
-    Button mBtnQuery, mBtnUpdate, mBtnDelete;
+    Button mBtnQuery, mBtnUpdate, mBtnDelete, mBtnLogout;
     EditText mEdtTxtName, mEdtTxtEmail;
 
     @Override
@@ -29,10 +29,18 @@ public class QueryActivity extends AppCompatActivity implements WebServiceAsyncT
         mBtnQuery = findViewById(R.id.btnQuery);
         mBtnUpdate = findViewById(R.id.btnUpdate);
         mBtnDelete = findViewById(R.id.btnDelete);
+        mBtnLogout = findViewById(R.id.btnLogout);
 
         mBtnQuery.setOnClickListener(mBtnQueryOnClickedListener);
         mBtnUpdate.setOnClickListener(mBtnUpdateOnClickedListener);
         mBtnDelete.setOnClickListener(mBtnDeleteOnClickedListener);
+        mBtnLogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
 
         // Get the data from intent
         Bundle bundle = getIntent().getExtras();

@@ -138,16 +138,13 @@ public class WebServiceAsyncTask extends AsyncTask<String, Integer, String> {
                     conn.setRequestMethod(METHOD_GET);
                     conn.setRequestProperty("Content-length", "0");
                     break;
-                case METHOD_POST:
-                    conn.setRequestMethod(METHOD_POST);
-                    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                    break;
                 case METHOD_DELETE:
                 case METHOD_PATCH:
                 case METHOD_PUT:
+                    conn.setRequestProperty("X-HTTP-Method-Override", requestMethod);
+                case METHOD_POST:
                     conn.setRequestMethod(METHOD_POST);
                     conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                    conn.setRequestProperty("X-HTTP-Method-Override", requestMethod);
                     break;
             }
 

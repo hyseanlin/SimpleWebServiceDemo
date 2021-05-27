@@ -6,13 +6,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
 
-public class QueryActivity extends AppCompatActivity {
+public class QueryActivity extends AppCompatActivity implements WebServiceAsyncTask.TaskDelegate {
     String mStrToken;
     Button mBtnQuery, mBtnUpdate;
     EditText mEdtTxtName;
@@ -52,9 +53,10 @@ public class QueryActivity extends AppCompatActivity {
 
             String strUrlRegister = "http://10.0.2.2:8000/me";
             // 建構一個 AsyncTask 物件
-            WebServiceAsyncTask wsTask = new WebServiceAsyncTask(QueryActivity.this, null);
+            WebServiceAsyncTask wsTask = new WebServiceAsyncTask(QueryActivity.this, null, mStrToken);
+            wsTask.setDelegate(QueryActivity.this);
             // 呼叫其 execute 方法(可夾帶參數)
-            wsTask.execute(strUrlRegister, strQueryString, "GET", mStrToken);
+            wsTask.execute(strUrlRegister, strQueryString, WebServiceAsyncTask.METHOD_GET);
         }
     };
 
@@ -69,9 +71,15 @@ public class QueryActivity extends AppCompatActivity {
 
             String strUrlRegister = "http://10.0.2.2:8000/me";
             // 建構一個 AsyncTask 物件
-            WebServiceAsyncTask wsTask = new WebServiceAsyncTask(QueryActivity.this, null);
+            WebServiceAsyncTask wsTask = new WebServiceAsyncTask(QueryActivity.this, null, mStrToken);
+            wsTask.setDelegate(QueryActivity.this);
             // 呼叫其 execute 方法(可夾帶參數)
-            wsTask.execute(strUrlRegister, strQueryString, "PUT", mStrToken);
+            wsTask.execute(strUrlRegister, strQueryString, WebServiceAsyncTask.METHOD_PUT);
         }
     };
+
+    @Override
+    public void onTaskFinishGettingData(String result) {
+        Toast.makeText(this, "Web Service Result: " + result, Toast.LENGTH_LONG).show();
+    }
 }

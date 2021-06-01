@@ -139,7 +139,10 @@ public class QueryActivity extends AppCompatActivity implements WebServiceAsyncT
     @Override
     public void onTaskEndWithResult(int status) {
         /* NOTE: Here, FREE to do any UI-related things (such as a call to Toast.makeText() ) */
-        mEdtTxtEmail.setText(mStrEmail);
-        mEdtTxtName.setText(mStrName);
+        if (status==1)
+        {
+            mEdtTxtEmail.setText(mStrEmail);
+            mEdtTxtName.setText(mStrName);
+        }
     }
 }
